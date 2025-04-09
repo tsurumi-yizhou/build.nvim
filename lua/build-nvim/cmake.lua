@@ -1,9 +1,41 @@
-local usercmd = vim.api.nvim_create_user_command
 local utils = require("build-nvim.utils")
 
+local create_file = function(build_dir)
+    local dir = vim.fs.joinpath(build_dir, ".cmake", "api", "v1", "query", "nvim")
+    vim.fn.mkdir(dir, "p")
+    local file = io.open(vim.fs.joinpath(dir, "query.json"), "w")
+    local content = vim.json.encode {
+        requests = {
+            {
+                kind = "codemodel",
+                version = 2
+            }
+        }
+    }
+    file:write(content)
+    file:close()
+end
+
+local parse_file = function(build_dir)
+    local dir = vim.fs.joinpath(build_dir, ".cmake", "api", "v1", "reply")
+    if not vim.fn.isdirectory(dir) then return end
+    local file = vim.fn.glob(vim.fs.joinpath(dir, "codemodel*.json"))
+    if file == nil or #file == 0 then return end
+    file = io.open(file, "r")
+    local content = file:read("*a")
+    local ok, json = pcall(vim.json.decode, content)
+    if not ok then return end
+    local build_targets = {}
+    for _, row in ipairs(json.configurations[1].targets) do
+        table.insert(build_targets, row.name)
+    end
+    return build_targets
+end
+
 return {
-    setup = function (opts)
-        local build_dir = opts.build_dir or "build"
+    setup = function(opts)
+        local build_dir = vim.fs.joinpath(vim.fn.getcwd(), opts.build_dir or "build")
+
         local setup_command = string.format("cmake -S . -B %s ", build_dir)
         if opts.generator then
             setup_command = setup_command .. string.format("-G %s ", opts.generator)
@@ -13,16 +45,15 @@ return {
             setup_command = setup_command .. string.format("--preset %s ", opts.preset())
         end
 
-        usercmd("Setup", function ()
-            utils.popup(setup_command, opts.post_setup)
-        end, {})
-
-        usercmd("Build", function (target)
-            local build_command = string.format("cmake --build %s ", build_dir)
-            if type(target.args) == "string" and #target.args > 0 then
-                build_command = string.format("%s --target %s ", build_command, target.args)
-            end
-            utils.popup(build_command, opts.post_build)
-        end, { nargs = "?" })
+        utils.define_setup(setup_command,  function()
+            create_file(build_dir)
+        end, function ()
+            utils.define_multi_build(nil, opts.post_build, {
+                build_all = "cmake --build " .. build_dir,
+                build_one = "cmake --build " .. build_dir .. " --target %s",
+                build_targets = parse_file(build_dir)
+            })
+            if opts.post_setup ~= nil then opts.post_setup() end
+        end)
     end
 }

@@ -1,13 +1,8 @@
-local usercmd = vim.api.nvim_create_user_command
 local utils = require("build-nvim.utils")
 
 return {
     setup = function (opts)
-        usercmd("Setup", function ()
-            utils.popup("bun install", opts.post_setup)
-        end, {})
-        usercmd("Build", function()
-            utils.popup("bun run build", opts.post_build)
-        end, {})
+        utils.define_setup("bun install", nil, opts.post_setup)
+        utils.define_single_build("bun run build", nil, opts.post_build)
     end
 }
