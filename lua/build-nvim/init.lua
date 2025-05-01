@@ -1,4 +1,4 @@
-local systems = { "cmake", "poetry", "lua", "dotnet", "astro", "vite" }
+local systems = { "cmake", "poetry", "lua", "dotnet", "astro", "vite", "gradle" }
 
 return {
     setup = function(opts)
