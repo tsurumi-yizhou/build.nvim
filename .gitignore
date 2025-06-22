@@ -1,0 +1,44 @@
+.idea/
+.nvim/
+.DS_Store
+*/.DS_Store
+*.swp
+*.swo
+.luarc.json
+
+# Compiled Lua sources
+luac.out
+
+# luarocks build files
+*.src.rock
+*.zip
+*.tar.gz
+
+# Object files
+*.o
+*.os
+*.ko
+*.obj
+*.elf
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+*.def
+*.exp
+
+# Shared objects
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Build directories
+build/
